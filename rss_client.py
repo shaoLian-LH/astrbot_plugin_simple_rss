@@ -13,8 +13,13 @@ from .rss import RSSItem
 
 
 class RSSClient:
-    def __init__(self, user_agent: str = "astrbot-plugin-simple-rss/1.1.0"):
+    def __init__(
+        self,
+        user_agent: str = "astrbot-plugin-simple-rss/1.1.0",
+        desc_max_length: int = 150,
+    ):
         self.user_agent = user_agent
+        self.desc_max_length = desc_max_length
 
     def normalize_url(self, value: str) -> str:
         raw = (value or "").strip()
@@ -101,8 +106,11 @@ class RSSClient:
         if link and not re.match(r"^https?://", link, flags=re.IGNORECASE):
             link = urljoin(base_url, link)
 
-        summary = self._direct_child_text(node, {"description", "summary", "content"})
+        summary = self._direct_child_text(
+            node, {"description", "summary", "content", "encoded"}
+        )
         summary = self._strip_html(summary)
+        summary = self._truncate_desc(summary)
 
         published = self._direct_child_text(node, {"pubDate", "published", "updated", "date"})
         published_ts = self._parse_datetime(published)
@@ -188,3 +196,10 @@ class RSSClient:
             return int(dt.timestamp())
         except Exception:
             return 0
+
+    def _truncate_desc(self, text: str) -> str:
+        if self.desc_max_length < 0:
+            return text
+        if len(text) <= self.desc_max_length:
+            return text
+        return text[: self.desc_max_length] + "..."

@@ -12,5 +12,18 @@
     "hint": "默认 20。值越大，首次订阅后可避免重复推送更久的历史内容。",
     "obvious_hint": true,
     "default": 20
+  },
+  "desc_max_length": {
+    "description": "每条 RSS 内容中的摘要(desc)最大长度，超过会被截断。",
+    "type": "int",
+    "hint": "默认 150。",
+    "obvious_hint": true,
+    "default": 150
+  },
+  "display_timezone": {
+    "description": "时间展示使用的时区。",
+    "type": "string",
+    "hint": "默认 Asia/Shanghai，例如 2026.02.17 18:57:57。",
+    "default": "Asia/Shanghai"
   }
 }

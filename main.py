@@ -1,6 +1,8 @@
 import hashlib
 import shlex
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -27,9 +29,18 @@ class SimpleRSSPlugin(Star):
         self.poll_fetch_count = self._read_int_config(
             "poll_fetch_count", self.init_fetch_count, min_value=1
         )
+        legacy_desc_max = self._to_int(
+            self._config_get("description_max_length", 150), 150, min_value=1
+        )
+        self.desc_max_length = self._to_int(
+            self._config_get("desc_max_length", legacy_desc_max),
+            legacy_desc_max,
+            min_value=1,
+        )
+        self.display_tz = self._read_display_timezone()
 
         self.data_handler = DataHandler()
-        self.rss_client = RSSClient()
+        self.rss_client = RSSClient(desc_max_length=self.desc_max_length)
         self.scheduler = AsyncIOScheduler()
 
     async def initialize(self):
@@ -65,7 +76,9 @@ class SimpleRSSPlugin(Star):
         return cron
 
     def _read_int_config(self, key: str, default: int, min_value: int = 0) -> int:
-        raw = self._config_get(key, default)
+        return self._to_int(self._config_get(key, default), default, min_value)
+
+    def _to_int(self, raw: Any, default: int, min_value: int = 0) -> int:
         try:
             value = int(raw)
         except Exception:
@@ -73,6 +86,23 @@ class SimpleRSSPlugin(Star):
         if value < min_value:
             value = min_value
         return value
+
+    def _read_display_timezone(self):
+        tz_name = str(self._config_get("display_timezone", "Asia/Shanghai")).strip()
+        if not tz_name:
+            tz_name = "Asia/Shanghai"
+
+        try:
+            return ZoneInfo(tz_name)
+        except ZoneInfoNotFoundError:
+            logger.warning(f"时区无效，使用默认 Asia/Shanghai: {tz_name}")
+        except Exception:
+            logger.warning(f"读取时区失败，使用默认 Asia/Shanghai: {tz_name}")
+
+        try:
+            return ZoneInfo("Asia/Shanghai")
+        except Exception:
+            return timezone(timedelta(hours=8))
 
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def on_event_message(self, event: AstrMessageEvent):
@@ -340,12 +370,14 @@ class SimpleRSSPlugin(Star):
         return outputs
 
     def _format_get_output(self, title: str, url: str, items: List[RSSItem], number: int) -> str:
-        lines = [f"[{title}] 最新 {min(number, len(items))} 条", f"源: {url}"]
-        for idx, item in enumerate(items[:number], start=1):
-            pub = f" | {item.published}" if item.published else ""
-            lines.append(f"{idx}. {item.title or '无标题'}{pub}")
-            if item.link:
-                lines.append(item.link)
+        picked_items = items[:number]
+        lines = [f"来自 [{title}]: [{url}]"]
+        for idx, item in enumerate(picked_items, start=1):
+            lines.append(f"# {idx}. {item.title or '无标题'}")
+            lines.append(f"> {self._format_item_time(item)}")
+            lines.append(item.summary or "（无摘要）")
+            if idx != len(picked_items):
+                lines.append("")
         return "\n".join(lines)
 
     async def _scheduled_poll(self, url: str, channel: str):
@@ -392,13 +424,25 @@ class SimpleRSSPlugin(Star):
 
     def _format_push_message(self, title: str, item: RSSItem) -> str:
         lines = [f"[{title}] 有新内容", f"标题: {item.title or '无标题'}"]
-        if item.published:
-            lines.append(f"时间: {item.published}")
+        lines.append(f"时间: {self._format_item_time(item)}")
         if item.link:
             lines.append(f"链接: {item.link}")
         if item.summary:
-            lines.append(f"摘要: {item.summary[:200]}")
+            lines.append(f"摘要: {item.summary}")
         return "\n".join(lines)
+
+    def _format_item_time(self, item: RSSItem) -> str:
+        if item.published_ts > 0:
+            try:
+                return datetime.fromtimestamp(
+                    item.published_ts, tz=self.display_tz
+                ).strftime("%Y.%m.%d %H:%M:%S")
+            except Exception:
+                pass
+
+        if item.published:
+            return item.published
+        return "未知时间"
 
     def _collect_new_items(self, items: List[RSSItem], sub: Dict[str, Any]) -> List[RSSItem]:
         recent_ids = sub.get("recent_ids", [])

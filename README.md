@@ -9,6 +9,8 @@
 - 支持手动获取单个或全部订阅源的最新内容。
 - 定时任务自动轮询并推送新内容。
 - 支持 RSS 2.0 与常见 Atom Feed 的基础解析。
+- 支持拉取并展示每条 Feed 的 desc（摘要），可配置最大长度。
+- 时间默认按上海时区展示，格式为 `YYYY.MM.DD HH:MM:SS`。
 
 ## 命令
 
@@ -26,6 +28,7 @@
 
 ```text
 /rss add https://dedicated.wallstreetcn.com/rss.xml * 0/5 * * * 0-7
+/rss add https://dedicated.wallstreetcn.com/rss.xml
 ```
 
 ### 2) 查看当前频道订阅
@@ -72,6 +75,19 @@
 /rss get 0 5
 ```
 
+返回格式：
+
+```text
+来自 [订阅源名称]: [订阅源地址]
+# 1. title
+> 2026.02.17 18:57:57
+desc
+
+# 2. title
+> 2026.02.17 18:01:52
+desc
+```
+
 ## 配置项
 
 通过 AstrBot 插件配置可调整：
@@ -80,6 +96,10 @@
   - 新增订阅时默认使用的 cron 表达式。
 - `init_fetch_count`（int，默认 `20`）
   - 新增订阅时初始化拉取并记录的条目数，用于建立去重基线。
+- `desc_max_length`（int，默认 `150`）
+  - 每条 RSS 内容中的摘要(desc)最大长度，超过会自动截断。
+- `display_timezone`（string，默认 `Asia/Shanghai`）
+  - 时间展示时使用的时区。
 
 兼容性说明：
 
