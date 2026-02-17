@@ -17,7 +17,7 @@ from .rss import RSSItem
 from .rss_client import RSSClient
 
 
-PLUGIN_VERSION = "0.0.3"
+PLUGIN_VERSION = "0.0.4"
 
 
 @register("astrbot_plugin_simple_rss", "slfk", "最简 RSS 订阅插件", PLUGIN_VERSION)

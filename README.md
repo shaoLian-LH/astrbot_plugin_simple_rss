@@ -107,7 +107,7 @@ desc
 
 ## 数据存储
 
-- 本地数据文件：`data/astrbot_plugin_simple_rss_data.json`
+- SQLite 数据库：`data/plugins/astrbot_plugin_simple_rss/srss.db`
 - 包含订阅源信息、频道订阅关系、cron 配置与去重检查点。
 
 ## 依赖
