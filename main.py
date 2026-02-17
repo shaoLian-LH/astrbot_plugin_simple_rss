@@ -17,7 +17,10 @@ from .rss import RSSItem
 from .rss_client import RSSClient
 
 
-@register("astrbot_plugin_simple_rss", "slfk", "最简 RSS 订阅插件", "1.1.0")
+PLUGIN_VERSION = "0.0.3"
+
+
+@register("astrbot_plugin_simple_rss", "slfk", "最简 RSS 订阅插件", PLUGIN_VERSION)
 class SimpleRSSPlugin(Star):
     def __init__(self, context: Context, config: Optional[AstrBotConfig] = None):
         super().__init__(context)
@@ -47,6 +50,12 @@ class SimpleRSSPlugin(Star):
         if not self.scheduler.running:
             self.scheduler.start()
         self._refresh_scheduler()
+        logger.info(
+            "simple_rss loaded: version=%s get_format=v2 desc_max_length=%s timezone=%s",
+            PLUGIN_VERSION,
+            self.desc_max_length,
+            self.display_tz,
+        )
 
     async def terminate(self):
         if self.scheduler.running:
