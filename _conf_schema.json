@@ -1,0 +1,16 @@
+{
+  "default_cron_exp": {
+    "description": "新增订阅时默认使用的 cron 表达式。支持 5 段或 6 段格式。",
+    "type": "string",
+    "hint": "例如 */30 * * * * 表示每 30 分钟拉取一次；也支持带秒的 6 段表达式。",
+    "obvious_hint": true,
+    "default": "*/30 * * * *"
+  },
+  "init_fetch_count": {
+    "description": "新增订阅时初始化拉取并记录的条目数，用于去重。",
+    "type": "int",
+    "hint": "默认 20。值越大，首次订阅后可避免重复推送更久的历史内容。",
+    "obvious_hint": true,
+    "default": 20
+  }
+}
