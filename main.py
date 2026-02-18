@@ -17,7 +17,7 @@ from .rss import RSSItem
 from .rss_client import RSSClient
 
 
-PLUGIN_VERSION = "0.0.4"
+PLUGIN_VERSION = "0.0.5"
 
 
 @register("astrbot_plugin_simple_rss", "slfk", "最简 RSS 订阅插件", PLUGIN_VERSION)
@@ -384,6 +384,7 @@ class SimpleRSSPlugin(Star):
         for idx, item in enumerate(picked_items, start=1):
             lines.append(f"# {idx}. {item.title or '无标题'}")
             lines.append(f"> {self._format_item_time(item)}")
+            lines.append(f"链接: {item.link or '（无链接）'}")
             lines.append(item.summary or "（无摘要）")
             if idx != len(picked_items):
                 lines.append("")
