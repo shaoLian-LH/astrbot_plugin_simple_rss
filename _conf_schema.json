@@ -13,6 +13,13 @@
     "obvious_hint": true,
     "default": 20
   },
+  "poll_fetch_count": {
+    "description": "每次定时轮询时最多拉取的条目数，用于合并推送当次积压内容。",
+    "type": "int",
+    "hint": "默认 5。值越大，单次推送可能包含更多历史新内容。",
+    "obvious_hint": true,
+    "default": 5
+  },
   "desc_max_length": {
     "description": "每条 RSS 内容中的摘要(desc)最大长度，超过会被截断。",
     "type": "int",

@@ -29,9 +29,7 @@ class SimpleRSSPlugin(Star):
 
         self.default_cron_expr = self._read_default_cron_expr()
         self.init_fetch_count = self._read_int_config("init_fetch_count", 20, min_value=1)
-        self.poll_fetch_count = self._read_int_config(
-            "poll_fetch_count", self.init_fetch_count, min_value=1
-        )
+        self.poll_fetch_count = self._read_int_config("poll_fetch_count", 5, min_value=1)
         legacy_desc_max = self._to_int(
             self._config_get("description_max_length", 150), 150, min_value=1
         )
@@ -421,24 +419,28 @@ class SimpleRSSPlugin(Star):
         if not new_items:
             return
 
-        for item in reversed(new_items):
-            text = self._format_push_message(feed.get("title") or url, item)
-            chain = MessageChain(chain=[Comp.Plain(text)])
-            try:
-                await self.context.send_message(channel, chain)
-            except Exception as exc:
-                logger.warning(f"rss 推送失败: {url} - {channel} - {exc}")
+        text = self._format_push_message(feed.get("title") or url, new_items)
+        chain = MessageChain(chain=[Comp.Plain(text)])
+        try:
+            await self.context.send_message(channel, chain)
+        except Exception as exc:
+            logger.warning(f"rss 推送失败: {url} - {channel} - {exc}")
 
         self._update_subscription_checkpoint(sub, new_items)
         self.data_handler.save_data()
 
-    def _format_push_message(self, title: str, item: RSSItem) -> str:
-        lines = [f"[{title}] 有新内容", f"标题: {item.title or '无标题'}"]
-        lines.append(f"时间: {self._format_item_time(item)}")
-        if item.link:
-            lines.append(f"链接: {item.link}")
-        if item.summary:
-            lines.append(f"摘要: {item.summary}")
+    def _format_push_message(self, title: str, items: List[RSSItem]) -> str:
+        ordered_items = list(reversed(items))
+        lines = [f"[{title}] 有 {len(ordered_items)} 条新内容"]
+        for idx, item in enumerate(ordered_items, start=1):
+            lines.append(f"# {idx}. {item.title or '无标题'}")
+            lines.append(f"时间: {self._format_item_time(item)}")
+            if item.link:
+                lines.append(f"链接: {item.link}")
+            if item.summary:
+                lines.append(f"摘要: {item.summary}")
+            if idx != len(ordered_items):
+                lines.append("")
         return "\n".join(lines)
 
     def _format_item_time(self, item: RSSItem) -> str:

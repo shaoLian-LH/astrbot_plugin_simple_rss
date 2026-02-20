@@ -96,6 +96,8 @@ desc
   - 新增订阅时默认使用的 cron 表达式。
 - `init_fetch_count`（int，默认 `20`）
   - 新增订阅时初始化拉取并记录的条目数，用于建立去重基线。
+- `poll_fetch_count`（int，默认 `5`）
+  - 每次定时轮询时最多拉取的条目数，用于合并推送当次积压内容。
 - `desc_max_length`（int，默认 `150`）
   - 每条 RSS 内容中的摘要(desc)最大长度，超过会自动截断。
 - `display_timezone`（string，默认 `Asia/Shanghai`）
